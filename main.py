@@ -13,7 +13,7 @@ class MyWindow(QtWidgets.QDockWidget):
         self.ui.setupUi(self)
         self.ui.pushButton.clicked.connect(self.solve_metrics)
 
-        self.F = MyFigure(width=5, height=2, dpi=100)
+        self.F = MyFigure(width=7, height=7, dpi=100)
         self.ui.horizontalLayout.addWidget(self.F)
 
     def solve_metrics(self):
