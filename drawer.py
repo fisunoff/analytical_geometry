@@ -73,3 +73,7 @@ class MyFigure(FigureCanvas):
         self.ax.add_collection3d(Poly3DCollection(vert,
                                                   facecolors='red', linewidths=2, edgecolors='red', alpha=.5))
         self.ax.set_aspect('equal')
+
+    def draw_point(self, point_coords: list):
+        """Отметить точку"""
+        self.ax.scatter3D(point_coords[0], point_coords[1], point_coords[2], s=100, c="red")

@@ -281,6 +281,46 @@
            </layout>
           </widget>
          </widget>
+         <widget class="QWidget" name="tab">
+          <attribute name="title">
+           <string>Расстояние</string>
+          </attribute>
+          <widget class="QWidget" name="gridLayoutWidget_3">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>291</width>
+             <height>91</height>
+            </rect>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_4">
+            <item row="1" column="0">
+             <widget class="QLabel" name="result_name_distance">
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QPushButton" name="pushButton_distance">
+              <property name="text">
+               <string>Go</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLineEdit" name="distance_line_1"/>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="distance_line_2"/>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="result_line_distance"/>
+            </item>
+           </layout>
+          </widget>
+         </widget>
         </widget>
        </item>
       </layout>
@@ -311,6 +351,10 @@
   <tabstop>result_line</tabstop>
   <tabstop>result_line_angle_cos</tabstop>
   <tabstop>result_line_angle</tabstop>
+  <tabstop>distance_line_1</tabstop>
+  <tabstop>distance_line_2</tabstop>
+  <tabstop>pushButton_distance</tabstop>
+  <tabstop>result_line_distance</tabstop>
  </tabstops>
  <resources/>
  <connections/>

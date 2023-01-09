@@ -13,6 +13,7 @@ class MyWindow(QtWidgets.QDockWidget):
         self.ui.setupUi(self)
         self.ui.pushButton.clicked.connect(self.solve_metrics)
         self.ui.pushButton_angle.clicked.connect(self.solve_angles)
+        self.ui.pushButton_distance.clicked.connect(self.solve_distance)
 
         self.F = MyFigure(width=7, height=7, dpi=100)
         self.ui.horizontalLayout.addWidget(self.F)
@@ -86,7 +87,8 @@ class MyWindow(QtWidgets.QDockWidget):
             obj1, obj2 = obj2, obj1  # сначала идет плоскость, потом прямая
         A, B, C, D = self.get_data()
         coords = {"A": A, "B": B, "C": C, "D": D}
-        if re.fullmatch(r"[A-D]{2,4}", obj1) and re.fullmatch(r"[A-D]{2,4}", obj2):
+        got_result = False
+        if re.fullmatch(r"[A-D]{2,3}", obj1) and re.fullmatch(r"[A-D]{2,3}", obj2):
             match [len(obj1), len(obj2)]:
                 case [2, 2]:  # угол между прямыми
                     vec1 = []
@@ -105,10 +107,7 @@ class MyWindow(QtWidgets.QDockWidget):
                         self.F.plot(A, B, C, D)
                         self.F.draw_vector(A, B, C, D, obj1[0], obj1[1])
                         self.F.draw_vector(A, B, C, D, obj2[0], obj2[1])
-                    else:
-                        self.ui.result_name_angle.setText("Ошибка! Возможно,\nнулевой вектор")
-                        self.ui.result_line_angle.setText("Inf")
-                        self.F.plot(A, B, C, D)
+                        got_result = True
 
                 case [3, 2]:  # угол между плоскостью и прямой
                     vec11 = []
@@ -132,6 +131,7 @@ class MyWindow(QtWidgets.QDockWidget):
                         self.F.plot(A, B, C, D)
                         self.F.draw_square(A, B, C, D, list(obj1))
                         self.F.draw_vector(A, B, C, D, obj2[0], obj2[1])
+                        got_result = True
 
                 case [3, 3]:  # угол между плоскостями
                     vec11 = []
@@ -160,7 +160,98 @@ class MyWindow(QtWidgets.QDockWidget):
                         self.F.plot(A, B, C, D)
                         self.F.draw_square(A, B, C, D, list(obj1))
                         self.F.draw_square(A, B, C, D, list(obj2))
+                        got_result = True
+        if not got_result:
+            self.ui.result_name_angle.setText("Ошибка! Возможно,\nнулевой вектор")
+            self.ui.result_line_angle_cos.setText(f"acos(None)")
+            self.ui.result_line_angle.setText("Inf")
+            self.F.plot(A, B, C, D)
 
+    def solve_distance(self):
+        """Расчет расстояний между точками, прямыми, плоскостями"""
+        obj1 = self.ui.distance_line_1.text()
+        obj2 = self.ui.distance_line_2.text()
+        if not (re.fullmatch(r"[A-D]{1,3}", obj1) and re.fullmatch(r"[A-D]{1,3}", obj2)):
+            self.ui.result_name_distance.setText("Некорректный ввод")
+            self.ui.result_line_distance.setText("None")
+            return 1
+        if len(obj2) > len(obj1):
+            obj1, obj2 = obj2, obj1  # сначала идет объект большего порядка
+        A, B, C, D = self.get_data()
+        coords = {"A": A, "B": B, "C": C, "D": D}
+        match [len(obj1), len(obj2)]:
+            case [1, 1]:  # расстояние между точками
+                dist = ((coords[obj2][0] - coords[obj1][0])**2 + (coords[obj2][1] - coords[obj1][1])**2 +
+                        (coords[obj2][2] - coords[obj1][2])**2)**0.5
+                self.ui.result_name_distance.setText("Расстояние\nмежду точками")
+                self.ui.result_line_distance.setText(f"{dist:.6f}")
+                self.F.plot(A, B, C, D)
+                self.F.draw_vector(A, B, C, D, obj1, obj2)
+            case [2, 1]:  # расстояние от точки до прямой
+                m0 = coords[obj2]
+                m1 = coords[obj1[0]]  # точка на прямой
+                vec_s = []  # направляющий вектор прямой
+                vec_m0m1 = []
+                for i in range(3):
+                    vec_s.append(coords[obj1[1]][i] - coords[obj1[0]][i])
+                    vec_m0m1.append(m0[i] - m1[i])
+                m0m1xs = ((vec_m0m1[1] * vec_s[2] - vec_m0m1[2] * vec_s[1])**2 +
+                          (vec_m0m1[0] * vec_s[2] - vec_m0m1[2] * vec_s[0])**2 +
+                          (vec_m0m1[0] * vec_s[1] - vec_m0m1[1] * vec_s[0])**2)**0.5  # модуль векторного произведения
+                len_s = (vec_s[0]**2 + vec_s[1]**2 + vec_s[2]**2)**0.5  # длина направляющего вектора
+                if len_s:
+                    h = m0m1xs / len_s
+                    self.ui.result_name_distance.setText("Расстояние\nмежду точкой и прямой")
+                    self.ui.result_line_distance.setText(f"{h:.6f}")
+                    self.F.plot(A, B, C, D)
+                    self.F.draw_vector(A, B, C, D, obj1[0], obj1[1])
+                    self.F.draw_point(m0)
+
+            case [3, 1]:  # расстояние от точки до плоскости
+                m0 = coords[obj2]
+                p1, p2, p3 = coords[obj1[0]], coords[obj1[1]], coords[obj1[2]]  # 3 точки на плоскости
+                matrix = numpy.array([p1, p2, p3])
+                z = []
+                for i in range(3):
+                    z.append(matrix[i][2])
+                    matrix[i][2] = 1.0  # получаем уравнения вида z = ax+by+c
+                z = numpy.array(z)
+                try:
+                    nx, ny, d = numpy.linalg.solve(matrix, z)
+                    nz = -1  # переход к виду ax+by+cz+d=0
+                    to_normal_form = (nx**2 + ny**2 + nz**2)**0.5  # приведение вектора нормали к нормальной форме
+                    a, b, c, d = nx/to_normal_form, ny/to_normal_form, nz/to_normal_form, d/to_normal_form
+                    h = abs(a * m0[0] + b * m0[1] + c * m0[2] + d)
+                except:
+                    h = 0
+                self.ui.result_name_distance.setText("Расстояние\nмежду точкой\nи плоскостью")
+                self.ui.result_line_distance.setText(f"{h:.6f}")
+                self.F.plot(A, B, C, D)
+                self.F.draw_square(A, B, C, D, obj1)
+                self.F.draw_point(m0)
+
+            case [2, 2]:  # расстояние между прямыми
+                p11, p12 = coords[obj1[0]], coords[obj1[1]]  # две точки на 1 прямой
+                p21, p22 = coords[obj2[0]], coords[obj2[1]]  # две точки на 2 прямой
+                vec_a0a1 = [p21[0] - p11[0], p21[1] - p11[1], p21[2] - p11[2]]
+                vec_a = [p12[0] - p11[0], p12[1] - p11[1], p12[2] - p11[2]]
+                vec_b = [p22[0] - p21[0], p22[1] - p21[1], p22[2] - p21[2]]
+                matrix = numpy.array([vec_a0a1, vec_a, vec_b])
+                det = numpy.linalg.det(matrix)
+                axb = numpy.cross(vec_a, vec_b)
+                abs_axb = (axb[0]**2 + axb[1]**2 + axb[2]**2)**0.5
+                # так как в пирамиде нет параллельных прямых - делим без проверки
+                h = det / abs_axb
+                self.ui.result_name_distance.setText("Расстояние\nмежду прямыми")
+                self.ui.result_line_distance.setText(f"{h:.6f}")
+                self.F.plot(A, B, C, D)
+                self.F.draw_vector(A, B, C, D, obj1[0], obj1[1])
+                self.F.draw_vector(A, B, C, D, obj2[0], obj2[1])
+
+            case _:
+                self.ui.result_name_distance.setText("Некорректный ввод")
+                self.ui.result_line_distance.setText("None")
+                self.F.plot(A, B, C, D)
 
 
 app = QtWidgets.QApplication([])
