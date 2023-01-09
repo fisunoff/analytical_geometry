@@ -210,20 +210,23 @@ class MyWindow(QtWidgets.QDockWidget):
             case [3, 1]:  # расстояние от точки до плоскости
                 m0 = coords[obj2]
                 p1, p2, p3 = coords[obj1[0]], coords[obj1[1]], coords[obj1[2]]  # 3 точки на плоскости
-                matrix = numpy.array([p1, p2, p3])
-                z = []
-                for i in range(3):
-                    z.append(matrix[i][2])
-                    matrix[i][2] = 1.0  # получаем уравнения вида z = ax+by+c
-                z = numpy.array(z)
-                try:
-                    nx, ny, d = numpy.linalg.solve(matrix, z)
-                    nz = -1  # переход к виду ax+by+cz+d=0
-                    to_normal_form = (nx**2 + ny**2 + nz**2)**0.5  # приведение вектора нормали к нормальной форме
-                    a, b, c, d = nx/to_normal_form, ny/to_normal_form, nz/to_normal_form, d/to_normal_form
-                    h = abs(a * m0[0] + b * m0[1] + c * m0[2] + d)
-                except:
-                    h = 0
+                minor_x = numpy.linalg.det([[p2[1] - p1[1], p2[2] - p1[2]],
+                                            [p3[1] - p1[1], p3[2] - p1[2]]])
+
+                minor_y = numpy.linalg.det([[p2[0] - p1[0], p2[2] - p1[2]],
+                                            [p3[0] - p1[0], p3[2] - p1[2]]])
+
+                minor_z = numpy.linalg.det([[p2[0] - p1[0], p2[1] - p1[1]],
+                                            [p3[0] - p1[0], p3[1] - p1[1]]])
+                a = minor_x
+                b = -minor_y
+                c = minor_z
+                d = p1[0] * minor_x - p1[1] * minor_y + p1[2] * minor_z
+
+                to_normal_form = (a**2 + b**2 + c**2)**0.5  # приведение вектора нормали к нормальной форме
+                a, b, c, d = a/to_normal_form, b/to_normal_form, c/to_normal_form, d/to_normal_form
+                h = abs(a * m0[0] + b * m0[1] + c * m0[2] + d)
+
                 self.ui.result_name_distance.setText("Расстояние\nмежду точкой\nи плоскостью")
                 self.ui.result_line_distance.setText(f"{h:.6f}")
                 self.F.plot(A, B, C, D)
